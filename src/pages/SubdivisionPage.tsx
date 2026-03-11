@@ -27,9 +27,9 @@ const SubdivisionPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-8 text-center"
           >
-            <h1 className="text-3xl md:text-4xl font-heading text-gradient-gold mb-2">
+            <h1 className="text-3xl md:text-4xl font-heading text-gradient-gold mb-2 leading-relaxed pb-1">
               {subdivision.icon} {language === 'hi' ? subdivision.nameHi : subdivision.nameEn}
             </h1>
             <p className="text-muted-foreground">
