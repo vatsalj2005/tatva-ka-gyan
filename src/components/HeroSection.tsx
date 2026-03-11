@@ -38,7 +38,7 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
-      {/* Carousel */}
+      {/* Fixed Carousel Background */}
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
@@ -46,7 +46,7 @@ const HeroSection = () => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 1.5 }}
-          className="absolute inset-0"
+          className="fixed inset-0 -z-10"
         >
           <img
             src={heroImages[currentSlide]}

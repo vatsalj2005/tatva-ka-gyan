@@ -53,10 +53,10 @@ const SubdivisionPage = () => {
                     <Music className="w-5 h-5 text-gold" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-foreground group-hover:text-gold transition-colors truncate">
+                    <h3 className="font-medium text-foreground group-hover:text-gold transition-colors leading-relaxed pb-0.5">
                       {language === 'hi' ? bhajan.title : bhajan.titleEn}
                     </h3>
-                    <p className="text-sm text-muted-foreground truncate">
+                    <p className="text-sm text-muted-foreground">
                       {language === 'hi' ? bhajan.description : bhajan.descriptionEn}
                     </p>
                     {bhajan.singer && (
