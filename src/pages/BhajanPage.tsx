@@ -107,7 +107,7 @@ const BhajanPage = () => {
               onClick={handleCopy}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:bg-gold/20 transition-colors"
             >
-              {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              {copied ? <Check className="w-4 h-4 text-gold" /> : <Copy className="w-4 h-4" />}
               <span className="text-sm">{copied ? t('copied') : t('copyVerse')}</span>
             </button>
           </motion.div>
