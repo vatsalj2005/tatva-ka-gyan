@@ -4,7 +4,7 @@ const Footer = () => {
   const { t } = useApp();
 
   return (
-    <footer className="border-t border-border/50 py-8 px-4 relative z-10 bg-background">
+    <footer className="border-t border-border/50 py-8 px-4">
       <div className="container mx-auto text-center">
         <p className="text-gold font-heading text-lg mb-2">🙏 {t('siteName')}</p>
         <p className="text-sm text-muted-foreground">{t('siteTagline')}</p>

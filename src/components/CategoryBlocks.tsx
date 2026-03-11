@@ -15,7 +15,7 @@ const CategoryBlocks = () => {
   const { t } = useApp();
 
   return (
-    <section className="py-20 px-4 relative z-10 bg-background">
+    <section className="py-20 px-4">
       <div className="container mx-auto max-w-5xl">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}

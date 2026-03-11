@@ -34,15 +34,19 @@ const BhajanLanding = () => {
               >
                 <Link
                   to={`/bhajan/subdivision/${sub.id}`}
-                  className="block p-6 rounded-2xl border border-border/50 bg-card hover:border-gold/30 hover:bg-secondary transition-all group text-center"
+                  className="block p-6 rounded-2xl border border-border/50 bg-card hover:border-gold/30 hover:bg-secondary transition-all group"
                 >
-                  <span className="text-3xl block mb-2">{sub.icon}</span>
-                  <h3 className="text-xl font-heading text-foreground group-hover:text-gold transition-colors leading-relaxed pb-1">
-                    {language === 'hi' ? sub.nameHi : sub.nameEn}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {language === 'hi' ? sub.descHi : sub.descEn}
-                  </p>
+                  <div className="flex items-center gap-4">
+                    <span className="text-3xl">{sub.icon}</span>
+                    <div>
+                      <h3 className="text-xl font-heading text-foreground group-hover:text-gold transition-colors">
+                        {language === 'hi' ? sub.nameHi : sub.nameEn}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {language === 'hi' ? sub.descHi : sub.descEn}
+                      </p>
+                    </div>
+                  </div>
                 </Link>
               </motion.div>
             ))}
