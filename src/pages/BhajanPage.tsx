@@ -57,7 +57,7 @@ const BhajanPage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <h1 className="text-3xl md:text-4xl font-heading text-gradient-gold mb-2">
+            <h1 className="text-3xl md:text-4xl font-heading text-gradient-gold mb-2 leading-relaxed pb-1">
               {language === 'hi' ? bhajan.title : bhajan.titleEn}
             </h1>
             <p className="text-muted-foreground mb-1">
