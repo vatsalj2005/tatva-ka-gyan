@@ -108,6 +108,8 @@ const translations = {
     bhaktiBhajanDesc: 'Devotional and worship bhajans',
     comingSoon: 'Coming Soon',
     backToHome: 'Back to Home',
+    downloadPdf: 'Download PDF',
+    relatedBhajans: 'Related Bhajans',
   },
 } as const;
 

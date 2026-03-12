@@ -6,7 +6,7 @@ import hero1 from '@/assets/hero-1.jpg';
 import hero2 from '@/assets/hero-2.jpg';
 import hero3 from '@/assets/hero-3.jpg';
 import { useNavigate } from 'react-router-dom';
-import { searchContent } from '@/data/bhajans';
+import { searchContent } from '@/data/content-loader';
 
 const heroImages = [hero1, hero2, hero3];
 
@@ -15,7 +15,7 @@ const HeroSection = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<{ id: string; title: string }[]>([]);
+  const [suggestions, setSuggestions] = useState<{ id: string; subdivision: string; slug: string; title: string }[]>([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -29,6 +29,8 @@ const HeroSection = () => {
       const results = searchContent(searchQuery).slice(0, 5);
       setSuggestions(results.map(r => ({
         id: r.id,
+        subdivision: r.subdivision,
+        slug: r.slug,
         title: language === 'hi' ? r.title : r.titleEn,
       })));
     } else {
@@ -38,25 +40,27 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
-      {/* Carousel */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentSlide}
-          initial={{ opacity: 0, scale: 1.1 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1.5 }}
-          className="absolute inset-0"
-        >
-          <img
-            src={heroImages[currentSlide]}
-            alt="Jain Heritage"
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-background/70" />
-        </motion.div>
-      </AnimatePresence>
+      {/* Fixed wallpaper background */}
+      <div className="fixed inset-0 z-0">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5 }}
+            className="absolute inset-0"
+          >
+            <img
+              src={heroImages[currentSlide]}
+              alt="Jain Heritage"
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-background/70" />
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       {/* Content */}
       <div className="relative z-10 text-center px-4 max-w-3xl mx-auto">
@@ -64,7 +68,8 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-4xl md:text-6xl font-heading text-gradient-gold mb-4 leading-tight"
+          className="text-4xl md:text-6xl font-heading text-gradient-gold mb-4 devanagari-safe"
+          style={{ lineHeight: 1.4 }}
         >
           {t('siteName')}
         </motion.h1>
@@ -72,7 +77,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="text-lg md:text-xl text-foreground/70 mb-10"
+          className="text-lg md:text-xl text-foreground/70 mb-10 devanagari-safe"
         >
           {t('heroSubtitle')}
         </motion.p>
@@ -95,7 +100,6 @@ const HeroSection = () => {
             />
           </div>
 
-          {/* Suggestions Dropdown */}
           <AnimatePresence>
             {suggestions.length > 0 && (
               <motion.div
@@ -108,7 +112,7 @@ const HeroSection = () => {
                   <button
                     key={s.id}
                     onClick={() => {
-                      navigate(`/bhajan/${s.id}`);
+                      navigate(`/bhajan/${s.subdivision}/${s.slug}`);
                       setSearchQuery('');
                       setSuggestions([]);
                     }}
