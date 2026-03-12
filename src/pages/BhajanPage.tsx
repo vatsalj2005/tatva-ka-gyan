@@ -2,26 +2,37 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useApp } from '@/contexts/AppContext';
-import { getBhajanById, subdivisions } from '@/data/bhajans';
+import { getBhajanById, getRelatedBhajans, subdivisions } from '@/data/content-loader';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { ArrowLeft, Play, Copy, Check, Languages, Volume2, VolumeX } from 'lucide-react';
+import { Play, Copy, Check, Languages, VolumeX, Download, Music } from 'lucide-react';
+import { generateBhajanPdf } from '@/lib/pdf-generator';
 
 const BhajanPage = () => {
-  const { id } = useParams<{ id: string }>();
+  const { subdivisionId, bhajanId } = useParams<{ subdivisionId: string; bhajanId: string }>();
   const { t, language, fontSize, lineSpacing, useSerif } = useApp();
   const [showTranslation, setShowTranslation] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const bhajan = getBhajanById(id || '');
+  const bhajan = getBhajanById(subdivisionId || '', bhajanId || '');
   if (!bhajan) return null;
 
   const subdivision = subdivisions.find(s => s.id === bhajan.subdivision);
+  const related = getRelatedBhajans(bhajan, 4);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(bhajan.lyrics);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadPdf = () => {
+    generateBhajanPdf({
+      title: bhajan.title,
+      singer: bhajan.singer,
+      lyrics: bhajan.lyrics,
+      translationEn: bhajan.translationEn,
+    });
   };
 
   const readingClass = useSerif ? 'font-reading' : '';
@@ -38,7 +49,7 @@ const BhajanPage = () => {
             {subdivision && (
               <>
                 <Link
-                  to={`/bhajan/subdivision/${subdivision.id}`}
+                  to={`/bhajan/${subdivision.id}`}
                   className="hover:text-gold transition-colors"
                 >
                   {language === 'hi' ? subdivision.nameHi : subdivision.nameEn}
@@ -51,21 +62,30 @@ const BhajanPage = () => {
             </span>
           </div>
 
-          {/* Title Section */}
+          {/* Title Section with Download */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="mb-8 flex flex-wrap items-start justify-between gap-4"
           >
-            <h1 className="text-3xl md:text-4xl font-heading text-gradient-gold mb-2">
-              {language === 'hi' ? bhajan.title : bhajan.titleEn}
-            </h1>
-            <p className="text-muted-foreground mb-1">
-              {language === 'hi' ? bhajan.description : bhajan.descriptionEn}
-            </p>
-            {bhajan.singer && (
-              <p className="text-sm text-gold/80">🎤 {t('singer')}: {bhajan.singer}</p>
-            )}
+            <div>
+              <h1 className="text-3xl md:text-4xl font-heading text-gradient-gold mb-2 devanagari-safe">
+                {language === 'hi' ? bhajan.title : bhajan.titleEn}
+              </h1>
+              <p className="text-muted-foreground mb-1">
+                {language === 'hi' ? bhajan.description : bhajan.descriptionEn}
+              </p>
+              {bhajan.singer && (
+                <p className="text-sm text-gold/80">🎤 {t('singer')}: {bhajan.singer}</p>
+              )}
+            </div>
+            <button
+              onClick={handleDownloadPdf}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:bg-gold hover:text-primary-foreground transition-colors flex-shrink-0"
+            >
+              <Download className="w-4 h-4" />
+              <span className="text-sm">{language === 'hi' ? 'PDF डाउनलोड' : 'Download PDF'}</span>
+            </button>
           </motion.div>
 
           {/* Audio + Controls */}
@@ -73,9 +93,8 @@ const BhajanPage = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex flex-wrap gap-3 mb-8"
+            className="flex flex-wrap gap-3 mb-8 justify-center"
           >
-            {/* Audio button */}
             {bhajan.audioUrl ? (
               <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-primary-foreground font-medium hover:opacity-90 transition-opacity">
                 <Play className="w-4 h-4" /> {language === 'hi' ? 'सुनें' : 'Listen'}
@@ -87,7 +106,6 @@ const BhajanPage = () => {
               </div>
             )}
 
-            {/* Translation toggle */}
             {bhajan.translationEn && (
               <button
                 onClick={() => setShowTranslation(!showTranslation)}
@@ -102,7 +120,6 @@ const BhajanPage = () => {
               </button>
             )}
 
-            {/* Copy */}
             <button
               onClick={handleCopy}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:bg-gold/20 transition-colors"
@@ -117,13 +134,13 @@ const BhajanPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className={`grid gap-6 ${showTranslation ? 'md:grid-cols-2' : 'grid-cols-1 max-w-3xl'}`}
+            className={`grid gap-6 ${showTranslation ? 'md:grid-cols-2' : 'grid-cols-1'}`}
           >
             {/* Hindi lyrics */}
-            <div className="p-6 md:p-8 rounded-2xl bg-card border border-border/50">
+            <div className={`p-6 md:p-8 rounded-2xl bg-card border border-border/50 ${!showTranslation ? 'max-w-[700px] mx-auto w-full' : ''}`}>
               <h3 className="text-sm font-medium text-gold mb-4 uppercase tracking-wider">{t('lyrics')}</h3>
               <div
-                className={`whitespace-pre-line text-foreground/90 ${readingClass}`}
+                className={`whitespace-pre-line text-foreground/90 devanagari-safe ${readingClass}`}
                 style={{ fontSize: `${fontSize}px`, lineHeight: lineSpacing }}
               >
                 {bhajan.lyrics}
@@ -147,6 +164,41 @@ const BhajanPage = () => {
               </motion.div>
             )}
           </motion.div>
+
+          {/* Related Bhajans */}
+          {related.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-16"
+            >
+              <h2 className="text-xl font-heading text-gradient-gold mb-6">
+                {language === 'hi' ? 'संबंधित भजन' : 'Related Bhajans'}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {related.map(r => (
+                  <Link
+                    key={r.id}
+                    to={`/bhajan/${r.subdivision}/${r.slug}`}
+                    className="flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-card hover:border-gold/30 hover:bg-secondary transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gold/10 flex items-center justify-center flex-shrink-0">
+                      <Music className="w-5 h-5 text-gold" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium text-foreground group-hover:text-gold transition-colors truncate devanagari-safe">
+                        {language === 'hi' ? r.title : r.titleEn}
+                      </h3>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {language === 'hi' ? r.description : r.descriptionEn}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
       <Footer />

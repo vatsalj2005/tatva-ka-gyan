@@ -23,8 +23,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/bhajan" element={<BhajanLanding />} />
-            <Route path="/bhajan/subdivision/:id" element={<SubdivisionPage />} />
-            <Route path="/bhajan/:id" element={<BhajanPage />} />
+            <Route path="/bhajan/:subdivisionId" element={<SubdivisionPage />} />
+            <Route path="/bhajan/:subdivisionId/:bhajanId" element={<BhajanPage />} />
             <Route path="/pooja" element={<ComingSoon title="पूजा | Pooja" />} />
             <Route path="/granth" element={<ComingSoon title="ग्रंथ | Granth" />} />
             <Route path="/teeka" element={<ComingSoon title="टीका | Teeka" />} />

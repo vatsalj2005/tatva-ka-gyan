@@ -141,10 +141,20 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-heading);
+    line-height: 1.5;
+    overflow: visible;
   }
 
   .font-reading {
     font-family: var(--font-reading);
+  }
+
+  /* Fix Hindi/Devanagari matra clipping */
+  .devanagari-safe {
+    line-height: 1.6;
+    overflow: visible;
+    padding-top: 0.15em;
+    padding-bottom: 0.1em;
   }
 }
 

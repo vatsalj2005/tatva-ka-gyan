@@ -53,6 +53,8 @@ const translations = {
     bhaktiBhajanDesc: 'भक्ति और आराधना के भजन',
     comingSoon: 'जल्द आ रहा है',
     backToHome: 'मुख्य पृष्ठ पर लौटें',
+    downloadPdf: 'PDF डाउनलोड',
+    relatedBhajans: 'संबंधित भजन',
   },
   en: {
     siteName: 'Tatwo Ka Arth',
@@ -106,6 +108,8 @@ const translations = {
     bhaktiBhajanDesc: 'Devotional and worship bhajans',
     comingSoon: 'Coming Soon',
     backToHome: 'Back to Home',
+    downloadPdf: 'Download PDF',
+    relatedBhajans: 'Related Bhajans',
   },
 } as const;
 
