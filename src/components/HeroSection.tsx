@@ -42,7 +42,7 @@ const HeroSection = () => {
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
       {/* Fixed wallpaper background — completely isolated from content */}
       <div className="absolute inset-0" style={{ zIndex: 0 }}>
-        <AnimatePresence mode="sync">
+        <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
             initial={{ opacity: 0, scale: 1.05 }}
@@ -50,7 +50,6 @@ const HeroSection = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 1.5 }}
             className="absolute inset-0"
-            style={{ zIndex: 0 }}
           >
             <img
               src={heroImages[currentSlide]}
