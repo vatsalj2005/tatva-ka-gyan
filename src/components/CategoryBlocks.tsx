@@ -15,13 +15,13 @@ const CategoryBlocks = () => {
   const { t } = useApp();
 
   return (
-    <section className="py-20 px-4">
+    <section className="relative py-20 px-4" style={{ zIndex: 1 }}>
       <div className="container mx-auto max-w-5xl">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-3xl md:text-4xl font-heading text-center text-gradient-gold mb-12"
+          className="text-3xl md:text-4xl font-heading text-center text-gradient-gold mb-12 devanagari-safe"
         >
           {t('categories')}
         </motion.h2>
@@ -40,7 +40,7 @@ const CategoryBlocks = () => {
               >
                 <Link
                   to={cat.ready ? cat.path : '#'}
-                  className={`block p-6 rounded-2xl border border-border/50 bg-card hover:bg-secondary transition-all group text-center relative overflow-hidden ${
+                  className={`block p-6 rounded-2xl border border-border/50 bg-card hover:bg-secondary transition-all group text-center relative overflow-visible ${
                     !cat.ready ? 'opacity-60' : ''
                   }`}
                 >
@@ -52,10 +52,10 @@ const CategoryBlocks = () => {
                   <div className="w-14 h-14 mx-auto mb-4 rounded-xl bg-gold/10 flex items-center justify-center group-hover:bg-gold/20 transition-colors">
                     <Icon className="w-7 h-7 text-gold" />
                   </div>
-                  <h3 className="font-heading text-lg text-foreground mb-1">
+                  <h3 className="font-heading text-lg text-foreground mb-1 devanagari-safe">
                     {t(cat.key)}
                   </h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed devanagari-safe">
                     {t(descKey as any)}
                   </p>
                 </Link>

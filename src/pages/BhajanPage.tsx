@@ -5,14 +5,17 @@ import { useApp } from '@/contexts/AppContext';
 import { getBhajanById, getRelatedBhajans, subdivisions } from '@/data/content-loader';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Play, Copy, Check, Languages, VolumeX, Download, Music } from 'lucide-react';
+import PdfDownloadModal from '@/components/PdfDownloadModal';
+import { Play, Copy, Check, Languages, VolumeX, Download, Music, Type } from 'lucide-react';
 import { generateBhajanPdf } from '@/lib/pdf-generator';
 
 const BhajanPage = () => {
   const { subdivisionId, bhajanId } = useParams<{ subdivisionId: string; bhajanId: string }>();
-  const { t, language, fontSize, lineSpacing, useSerif } = useApp();
+  const { t, language, fontSize, lineSpacing, useSerif, theme } = useApp();
   const [showTranslation, setShowTranslation] = useState(false);
+  const [showRoman, setShowRoman] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
 
   const bhajan = getBhajanById(subdivisionId || '', bhajanId || '');
   if (!bhajan) return null;
@@ -26,16 +29,22 @@ const BhajanPage = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownloadPdf = () => {
+  const handlePdfConfirm = (includeTranslation: boolean) => {
+    setPdfModalOpen(false);
     generateBhajanPdf({
       title: bhajan.title,
       singer: bhajan.singer,
       lyrics: bhajan.lyrics,
       translationEn: bhajan.translationEn,
+      includeTranslation,
+      theme,
     });
   };
 
   const readingClass = useSerif ? 'font-reading' : '';
+
+  // Determine column layout
+  const hasSidePanel = showTranslation || showRoman;
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,15 +52,12 @@ const BhajanPage = () => {
       <div className="pt-24 pb-16 px-4">
         <div className="container mx-auto max-w-5xl">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 flex-wrap">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6 flex-wrap devanagari-safe">
             <Link to="/bhajan" className="hover:text-gold transition-colors">{t('bhajan')}</Link>
             <span>/</span>
             {subdivision && (
               <>
-                <Link
-                  to={`/bhajan/${subdivision.id}`}
-                  className="hover:text-gold transition-colors"
-                >
+                <Link to={`/bhajan/${subdivision.id}`} className="hover:text-gold transition-colors">
                   {language === 'hi' ? subdivision.nameHi : subdivision.nameEn}
                 </Link>
                 <span>/</span>
@@ -72,7 +78,7 @@ const BhajanPage = () => {
               <h1 className="text-3xl md:text-4xl font-heading text-gradient-gold mb-2 devanagari-safe">
                 {language === 'hi' ? bhajan.title : bhajan.titleEn}
               </h1>
-              <p className="text-muted-foreground mb-1">
+              <p className="text-muted-foreground mb-1 devanagari-safe">
                 {language === 'hi' ? bhajan.description : bhajan.descriptionEn}
               </p>
               {bhajan.singer && (
@@ -80,11 +86,11 @@ const BhajanPage = () => {
               )}
             </div>
             <button
-              onClick={handleDownloadPdf}
+              onClick={() => setPdfModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary text-secondary-foreground hover:bg-gold hover:text-primary-foreground transition-colors flex-shrink-0"
             >
               <Download className="w-4 h-4" />
-              <span className="text-sm">{language === 'hi' ? 'PDF डाउनलोड' : 'Download PDF'}</span>
+              <span className="text-sm">{t('downloadPdf')}</span>
             </button>
           </motion.div>
 
@@ -108,7 +114,7 @@ const BhajanPage = () => {
 
             {bhajan.translationEn && (
               <button
-                onClick={() => setShowTranslation(!showTranslation)}
+                onClick={() => { setShowTranslation(!showTranslation); if (!showTranslation) setShowRoman(false); }}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
                   showTranslation
                     ? 'bg-gold text-primary-foreground'
@@ -119,6 +125,19 @@ const BhajanPage = () => {
                 {showTranslation ? t('hideTranslation') : t('englishMeaning')}
               </button>
             )}
+
+            {/* Roman Script toggle */}
+            <button
+              onClick={() => { setShowRoman(!showRoman); if (!showRoman) setShowTranslation(false); }}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
+                showRoman
+                  ? 'bg-gold text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-gold/20'
+              }`}
+            >
+              <Type className="w-4 h-4" />
+              {showRoman ? t('hideRomanScript') : t('romanScript')}
+            </button>
 
             <button
               onClick={handleCopy}
@@ -134,10 +153,10 @@ const BhajanPage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className={`grid gap-6 ${showTranslation ? 'md:grid-cols-2' : 'grid-cols-1'}`}
+            className={`grid gap-6 ${hasSidePanel ? 'md:grid-cols-2' : 'grid-cols-1'}`}
           >
             {/* Hindi lyrics */}
-            <div className={`p-6 md:p-8 rounded-2xl bg-card border border-border/50 ${!showTranslation ? 'max-w-[700px] mx-auto w-full' : ''}`}>
+            <div className={`p-6 md:p-8 rounded-2xl bg-card border border-border/50 ${!hasSidePanel ? 'max-w-[700px] mx-auto w-full' : ''}`}>
               <h3 className="text-sm font-medium text-gold mb-4 uppercase tracking-wider">{t('lyrics')}</h3>
               <div
                 className={`whitespace-pre-line text-foreground/90 devanagari-safe ${readingClass}`}
@@ -163,6 +182,30 @@ const BhajanPage = () => {
                 </div>
               </motion.div>
             )}
+
+            {/* Roman transliteration */}
+            {showRoman && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="p-6 md:p-8 rounded-2xl bg-card border border-gold/20"
+              >
+                <h3 className="text-sm font-medium text-gold mb-4 uppercase tracking-wider">{t('transliteration')}</h3>
+                {bhajan.transliterationRom ? (
+                  <div
+                    className="whitespace-pre-line text-foreground/80"
+                    style={{ fontSize: `${Math.max(fontSize - 1, 12)}px`, lineHeight: lineSpacing }}
+                  >
+                    {bhajan.transliterationRom}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 p-4 rounded-xl bg-secondary text-muted-foreground text-sm">
+                    <Type className="w-4 h-4" />
+                    {t('romanUnavailable')}
+                  </div>
+                )}
+              </motion.div>
+            )}
           </motion.div>
 
           {/* Related Bhajans */}
@@ -173,8 +216,8 @@ const BhajanPage = () => {
               transition={{ delay: 0.5 }}
               className="mt-16"
             >
-              <h2 className="text-xl font-heading text-gradient-gold mb-6">
-                {language === 'hi' ? 'संबंधित भजन' : 'Related Bhajans'}
+              <h2 className="text-xl font-heading text-gradient-gold mb-6 devanagari-safe">
+                {t('relatedBhajans')}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {related.map(r => (
@@ -202,6 +245,12 @@ const BhajanPage = () => {
         </div>
       </div>
       <Footer />
+      <PdfDownloadModal
+        open={pdfModalOpen}
+        hasTranslation={!!bhajan.translationEn}
+        onConfirm={handlePdfConfirm}
+        onCancel={() => setPdfModalOpen(false)}
+      />
     </div>
   );
 };

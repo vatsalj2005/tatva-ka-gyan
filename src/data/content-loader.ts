@@ -1,7 +1,6 @@
 /**
  * Filesystem-based content loader using Vite's import.meta.glob
  * Automatically discovers bhajans from /src/content/ at build time.
- * To add a new bhajan: create a .txt file with frontmatter in the appropriate folder and rebuild.
  */
 
 export interface BhajanData {
@@ -16,6 +15,7 @@ export interface BhajanData {
   tags: string[];
   lyrics: string;
   translationEn?: string;
+  transliterationRom?: string;
   audioUrl?: string;
 }
 
@@ -28,7 +28,6 @@ export interface SubdivisionData {
   icon: string;
 }
 
-// Subdivision metadata (icons, names need human curation)
 export const subdivisions: SubdivisionData[] = [
   { id: 'dev', nameHi: 'देव भजन', nameEn: 'Dev Bhajan', descHi: 'तीर्थंकर और देवों के भजन', descEn: 'Bhajans of Tirthankaras and Deities', icon: '🙏' },
   { id: 'shastra', nameHi: 'शास्त्र भजन', nameEn: 'Shastra Bhajan', descHi: 'शास्त्रों पर आधारित भजन', descEn: 'Bhajans based on scriptures', icon: '📜' },
@@ -36,7 +35,6 @@ export const subdivisions: SubdivisionData[] = [
   { id: 'bhakti', nameHi: 'भक्ति भजन', nameEn: 'Bhakti Bhajan', descHi: 'भक्ति और आराधना के भजन', descEn: 'Devotional and worship bhajans', icon: '🎵' },
 ];
 
-// Parse frontmatter from raw text
 function parseFrontmatter(raw: string): { metadata: Record<string, string>; content: string } {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) return { metadata: {}, content: raw.trim() };
@@ -52,15 +50,14 @@ function parseFrontmatter(raw: string): { metadata: Record<string, string>; cont
   return { metadata, content: match[2].trim() };
 }
 
-// Auto-discover all bhajan files at build time
 const bhajanFiles = import.meta.glob('../content/bhajans/**/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 const translationFiles = import.meta.glob('../content/translations/**/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+const transliterationFiles = import.meta.glob('../content/transliteration/**/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 function buildBhajans(): BhajanData[] {
   const results: BhajanData[] = [];
 
   for (const [filePath, rawContent] of Object.entries(bhajanFiles)) {
-    // Extract subdivision and filename from path like ../content/bhajans/dev/filename.txt
     const pathMatch = filePath.match(/\/content\/bhajans\/([^/]+)\/([^/]+)\.txt$/);
     if (!pathMatch) continue;
 
@@ -68,14 +65,15 @@ function buildBhajans(): BhajanData[] {
     const slug = pathMatch[2];
     const { metadata, content } = parseFrontmatter(rawContent);
 
-    // Look for matching translation file
     const translationKey = Object.keys(translationFiles).find(
       tp => tp.includes(`/content/translations/${subdivision}/${slug}_en.txt`)
     );
     const translationEn = translationKey ? translationFiles[translationKey].trim() : undefined;
 
-    // Audio would be in public/audio/subdivision/filename.mp3
-    const audioPath = `/audio/${subdivision}/${slug}.mp3`;
+    const translitKey = Object.keys(transliterationFiles).find(
+      tp => tp.includes(`/content/transliteration/${subdivision}/${slug}_rom.txt`)
+    );
+    const transliterationRom = translitKey ? transliterationFiles[translitKey].trim() : undefined;
 
     const tags = metadata.tags
       ? metadata.tags.split(',').map(t => t.trim()).filter(Boolean)
@@ -93,14 +91,14 @@ function buildBhajans(): BhajanData[] {
       tags,
       lyrics: content,
       translationEn,
-      audioUrl: undefined, // Set to audioPath when audio files exist
+      transliterationRom,
+      audioUrl: undefined,
     });
   }
 
   return results;
 }
 
-// Build once and export
 export const bhajans: BhajanData[] = buildBhajans();
 
 export const getBhajansBySubdivision = (subdivisionId: string) =>
@@ -133,6 +131,7 @@ export const searchContent = (query: string) => {
     b.descriptionEn.toLowerCase().includes(q) ||
     b.lyrics.includes(q) ||
     b.tags.some(t => t.includes(q)) ||
-    (b.singer && b.singer.includes(q))
+    (b.singer && b.singer.includes(q)) ||
+    (b.transliterationRom && b.transliterationRom.toLowerCase().includes(q))
   );
 };

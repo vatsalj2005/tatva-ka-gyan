@@ -22,7 +22,7 @@ interface AppContextType extends AppState {
 
 const AppContext = createContext<AppContextType | null>(null);
 
-const STORAGE_KEY = 'tatwo-ka-arth-settings';
+const STORAGE_KEY = 'tatvo-ka-arth-settings';
 
 const themeClassMap: Record<ThemeType, string> = {
   dark: '',
