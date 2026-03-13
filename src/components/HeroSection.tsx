@@ -40,8 +40,8 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-screen flex items-center justify-center overflow-hidden">
-      {/* Fixed wallpaper background */}
-      <div className="fixed inset-0 z-0">
+      {/* Fixed wallpaper background — completely isolated from content */}
+      <div className="fixed inset-0" style={{ zIndex: 0 }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
@@ -62,8 +62,8 @@ const HeroSection = () => {
         </AnimatePresence>
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 text-center px-4 max-w-3xl mx-auto">
+      {/* Content — always visible, never affected by wallpaper transitions */}
+      <div className="relative text-center px-4 max-w-3xl mx-auto" style={{ zIndex: 1 }}>
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
