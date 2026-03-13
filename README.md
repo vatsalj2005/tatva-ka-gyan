@@ -4,7 +4,7 @@ A digital library for Jain scriptures, bhajans, poojas, and religious texts.
 
 ## 🌐 Live Website
 
-`https://[your-username].github.io/tatva-ka-gyan/`
+`https://vatsalj2005.github.io/tatva-ka-gyan/`
 
 ## 🚀 Quick Deploy to GitHub Pages
 
@@ -13,7 +13,7 @@ A digital library for Jain scriptures, bhajans, poojas, and religious texts.
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin https://github.com/[your-username]/tatva-ka-gyan.git
+git remote add origin https://github.com/vatsalj2005/tatva-ka-gyan.git
 git push -u origin main
 ```
 
