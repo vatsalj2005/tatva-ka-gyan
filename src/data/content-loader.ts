@@ -8,14 +8,9 @@ export interface BhajanData {
   slug: string;
   subdivision: string;
   title: string;
-  titleEn: string;
-  description: string;
-  descriptionEn: string;
   singer?: string;
   tags: string[];
   lyrics: string;
-  translationEn?: string;
-  transliterationRom?: string;
   audioUrl?: string;
 }
 
@@ -35,6 +30,60 @@ export const subdivisions: SubdivisionData[] = [
   { id: 'bhakti', nameHi: 'भक्ति भजन', nameEn: 'Bhakti Bhajan', descHi: 'भक्ति और आराधना के भजन', descEn: 'Devotional and worship bhajans', icon: '🎵' },
 ];
 
+// Hindi stopwords to exclude from tag generation
+const hindiStopwords = new Set([
+  'का', 'के', 'की', 'को', 'में', 'से', 'है', 'हैं', 'था', 'थे', 'थी', 'हो', 'और', 'या', 'तो', 'ही',
+  'भी', 'तुम', 'तुम्हारी', 'तुम्हारा', 'मैं', 'हम', 'यह', 'वह', 'इस', 'उस', 'एक', 'दो', 'तीन',
+]);
+
+/**
+ * Generate title from filename
+ * If filename contains Hindi characters, use as-is
+ * If filename is in English (hyphens/underscores), convert to title case
+ * Example: mahavir-prabhu-vandana -> Mahavir Prabhu Vandana
+ * Example: महावीर_स्वामी_की_जय -> महावीर स्वामी की जय
+ */
+function generateTitleFromFilename(filename: string): string {
+  // Check if filename contains Devanagari characters
+  const hasHindi = /[\u0900-\u097F]/.test(filename);
+  
+  if (hasHindi) {
+    // Hindi filename - replace hyphens and underscores with spaces
+    return filename.replace(/[-_]/g, ' ');
+  } else {
+    // English filename - convert to title case
+    return filename
+      .split(/[-_]/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+}
+
+/**
+ * Extract meaningful tags from Hindi text
+ */
+function extractTags(text: string): string[] {
+  // Split by whitespace and punctuation
+  const words = text.split(/[\s।॥,;.!?\-—()[\]{}]+/);
+  const wordFreq: Record<string, number> = {};
+  
+  words.forEach(word => {
+    const cleaned = word.trim();
+    if (cleaned.length > 2 && !hindiStopwords.has(cleaned)) {
+      wordFreq[cleaned] = (wordFreq[cleaned] || 0) + 1;
+    }
+  });
+  
+  // Get top 5 most frequent meaningful words
+  return Object.entries(wordFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([word]) => word.toLowerCase());
+}
+
+/**
+ * Parse frontmatter if exists, otherwise return raw content
+ */
 function parseFrontmatter(raw: string): { metadata: Record<string, string>; content: string } {
   const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) return { metadata: {}, content: raw.trim() };
@@ -51,8 +100,6 @@ function parseFrontmatter(raw: string): { metadata: Record<string, string>; cont
 }
 
 const bhajanFiles = import.meta.glob('../content/bhajans/**/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-const translationFiles = import.meta.glob('../content/translations/**/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
-const transliterationFiles = import.meta.glob('../content/transliteration/**/*.txt', { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
 
 function buildBhajans(): BhajanData[] {
   const results: BhajanData[] = [];
@@ -63,35 +110,24 @@ function buildBhajans(): BhajanData[] {
 
     const subdivision = pathMatch[1];
     const slug = pathMatch[2];
+    
+    // Parse content (support both old metadata format and new plain text)
     const { metadata, content } = parseFrontmatter(rawContent);
-
-    const translationKey = Object.keys(translationFiles).find(
-      tp => tp.includes(`/content/translations/${subdivision}/${slug}_en.txt`)
-    );
-    const translationEn = translationKey ? translationFiles[translationKey].trim() : undefined;
-
-    const translitKey = Object.keys(transliterationFiles).find(
-      tp => tp.includes(`/content/transliteration/${subdivision}/${slug}_rom.txt`)
-    );
-    const transliterationRom = translitKey ? transliterationFiles[translitKey].trim() : undefined;
-
-    const tags = metadata.tags
-      ? metadata.tags.split(',').map(t => t.trim()).filter(Boolean)
-      : [];
+    
+    // Generate title from filename
+    const title = metadata.title || generateTitleFromFilename(slug);
+    
+    // Extract tags dynamically from content
+    const tags = extractTags(content);
 
     results.push({
       id: `${subdivision}/${slug}`,
       slug,
       subdivision,
-      title: metadata.title || slug.replace(/_/g, ' '),
-      titleEn: metadata.titleEn || metadata.title || slug.replace(/_/g, ' '),
-      description: metadata.description || '',
-      descriptionEn: metadata.descriptionEn || metadata.description || '',
+      title,
       singer: metadata.singer,
       tags,
       lyrics: content,
-      translationEn,
-      transliterationRom,
       audioUrl: undefined,
     });
   }
@@ -124,14 +160,19 @@ export const getRelatedBhajans = (bhajan: BhajanData, limit = 4): BhajanData[] =
 
 export const searchContent = (query: string) => {
   const q = query.toLowerCase();
-  return bhajans.filter(b =>
-    b.title.includes(q) ||
-    b.titleEn.toLowerCase().includes(q) ||
-    b.description.includes(q) ||
-    b.descriptionEn.toLowerCase().includes(q) ||
-    b.lyrics.includes(q) ||
-    b.tags.some(t => t.includes(q)) ||
-    (b.singer && b.singer.includes(q)) ||
-    (b.transliterationRom && b.transliterationRom.toLowerCase().includes(q))
-  );
+  // Import transliteration for search support
+  const { transliterateText } = require('@/lib/transliterate');
+  
+  return bhajans.filter(b => {
+    // Generate romanized version for search
+    const romanizedLyrics = transliterateText(b.lyrics).toLowerCase();
+    const romanizedTitle = transliterateText(b.title).toLowerCase();
+    
+    return b.title.includes(q) ||
+      romanizedTitle.includes(q) ||
+      b.lyrics.includes(q) ||
+      romanizedLyrics.includes(q) ||
+      b.tags.some(t => t.includes(q)) ||
+      (b.singer && b.singer.includes(q));
+  });
 };

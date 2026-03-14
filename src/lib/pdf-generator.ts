@@ -1,11 +1,11 @@
 import jsPDF from 'jspdf';
+import { transliterateText } from './transliterate';
 
 interface PdfOptions {
   title: string;
+  slug: string;
   singer?: string;
   lyrics: string;
-  translationEn?: string;
-  includeTranslation: boolean;
   theme: 'dark' | 'soft-dark' | 'light' | 'sepia';
 }
 
@@ -39,10 +39,35 @@ const themeColors: Record<string, { bg: [number, number, number]; text: [number,
 
 let fontLoaded = false;
 
+/**
+ * Sanitize text to remove control characters and normalize
+ */
+function sanitizeText(text: string): string {
+  if (!text) return '';
+  
+  // Remove control characters except newlines
+  let cleaned = text.replace(/[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F-\x9F]/g, '');
+  
+  // Normalize unicode
+  cleaned = cleaned.normalize('NFC');
+  
+  // Remove any remaining invisible characters
+  cleaned = cleaned.replace(/[\u200B-\u200D\uFEFF]/g, '');
+  
+  // Trim each line but preserve line breaks
+  cleaned = cleaned.split('\n').map(line => line.trim()).join('\n');
+  
+  return cleaned;
+}
+
 async function loadDevanagariFont(doc: jsPDF) {
-  if (fontLoaded) return;
+  if (fontLoaded) return true;
   try {
-    const response = await fetch('/fonts/NotoSansDevanagari-Regular.ttf');
+    // Use relative path that works with base URL
+    const basePath = import.meta.env.BASE_URL || '/';
+    const fontPath = `${basePath}fonts/NotoSansDevanagari-Regular.ttf`;
+    const response = await fetch(fontPath);
+    if (!response.ok) throw new Error('Font not found');
     const arrayBuffer = await response.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
     let binary = '';
@@ -53,23 +78,26 @@ async function loadDevanagariFont(doc: jsPDF) {
     doc.addFileToVFS('NotoSansDevanagari-Regular.ttf', base64);
     doc.addFont('NotoSansDevanagari-Regular.ttf', 'NotoSansDevanagari', 'normal');
     fontLoaded = true;
+    return true;
   } catch (err) {
-    console.warn('Failed to load Devanagari font for PDF, falling back to Helvetica', err);
+    console.error('Failed to load Devanagari font for PDF:', err);
+    return false;
   }
 }
 
-export async function generateBhajanPdf({ title, singer, lyrics, translationEn, includeTranslation, theme }: PdfOptions) {
+export async function generateBhajanPdf({ title, slug, singer, lyrics, theme }: PdfOptions) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 25;
-  const contentWidth = pageWidth - margin * 2;
+  const marginLeft = 20;
+  const marginRight = 20;
+  const marginTop = 40;
+  const marginBottom = 40;
+  const contentWidth = pageWidth - marginLeft - marginRight;
   const colors = themeColors[theme] || themeColors.dark;
 
   // Load Devanagari font
-  await loadDevanagariFont(doc);
-
-  const useDevanagari = fontLoaded;
+  const useDevanagari = await loadDevanagariFont(doc);
 
   function setPageBg() {
     doc.setFillColor(...colors.bg);
@@ -84,9 +112,9 @@ export async function generateBhajanPdf({ title, singer, lyrics, translationEn, 
     doc.setTextColor(...colors.accent);
   }
 
-  // Page 1: Title + Lyrics
+  // ========== PAGE 1: Hindi Lyrics ==========
   setPageBg();
-  let y = 40;
+  let y = marginTop;
 
   if (useDevanagari) {
     doc.setFont('NotoSansDevanagari', 'normal');
@@ -98,63 +126,110 @@ export async function generateBhajanPdf({ title, singer, lyrics, translationEn, 
   setAccentColor();
   doc.setFontSize(22);
   doc.text(title, pageWidth / 2, y, { align: 'center' });
-  y += 10;
+  y += 15;
 
   if (singer) {
     setTextColor();
     doc.setFontSize(12);
     doc.text(singer, pageWidth / 2, y, { align: 'center' });
-    y += 12;
+    y += 10;
   }
 
   doc.setDrawColor(...colors.divider);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 12;
+  doc.line(marginLeft, y, pageWidth - marginRight, y);
+  y += 15;
 
-  // Lyrics
+  // Hindi Lyrics
   setTextColor();
-  doc.setFontSize(13);
-  const lyricsLines = doc.splitTextToSize(lyrics, contentWidth);
+  doc.setFontSize(14);
+  const lyricsLines = lyrics.split('\n');
+  
   for (const line of lyricsLines) {
-    if (y > 270) {
+    const trimmedLine = line.trim();
+    
+    // Empty line - add spacing
+    if (!trimmedLine) {
+      y += 7;
+      continue;
+    }
+    
+    // Check if we need a new page
+    if (y > pageHeight - marginBottom) {
       doc.addPage();
       setPageBg();
-      y = 30;
-    }
-    doc.text(line, pageWidth / 2, y, { align: 'center' });
-    y += 7;
-  }
-
-  // Page 2: English Translation (if requested and available)
-  if (includeTranslation && translationEn) {
-    doc.addPage();
-    setPageBg();
-    y = 40;
-
-    doc.setFont('Helvetica', 'normal');
-    setAccentColor();
-    doc.setFontSize(18);
-    doc.text('English Meaning', pageWidth / 2, y, { align: 'center' });
-    y += 15;
-
-    doc.setDrawColor(...colors.divider);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 12;
-
-    setTextColor();
-    doc.setFontSize(12);
-    const transLines = doc.splitTextToSize(translationEn, contentWidth);
-    for (const line of transLines) {
-      if (y > 270) {
-        doc.addPage();
-        setPageBg();
-        y = 30;
+      if (useDevanagari) {
+        doc.setFont('NotoSansDevanagari', 'normal');
       }
-      doc.text(line, pageWidth / 2, y, { align: 'center' });
-      y += 7;
+      setTextColor();
+      y = marginTop;
     }
+    
+    // Render line centered
+    doc.text(trimmedLine, pageWidth / 2, y, { 
+      align: 'center',
+      maxWidth: contentWidth 
+    });
+    y += 8;
   }
 
-  const filename = title.replace(/[^\w\s]/g, '').replace(/\s+/g, '_') || 'bhajan';
-  doc.save(`${filename}.pdf`);
+  // ========== PAGE 2: Romanized Version ==========
+  const romanizedLyrics = transliterateText(lyrics);
+  const sanitizedRoman = sanitizeText(romanizedLyrics);
+  
+  doc.addPage();
+  setPageBg();
+  y = marginTop;
+
+  // Use Helvetica for romanized text
+  doc.setFont('Helvetica', 'normal');
+  
+  // Title
+  setAccentColor();
+  doc.setFontSize(22);
+  doc.text(title, pageWidth / 2, y, { align: 'center' });
+  y += 10;
+
+  setTextColor();
+  doc.setFontSize(12);
+  doc.text('(Romanized)', pageWidth / 2, y, { align: 'center' });
+  y += 10;
+
+  doc.setDrawColor(...colors.divider);
+  doc.line(marginLeft, y, pageWidth - marginRight, y);
+  y += 15;
+
+  // Romanized Lyrics
+  setTextColor();
+  doc.setFontSize(14);
+  const romanLines = sanitizedRoman.split('\n');
+  
+  for (const line of romanLines) {
+    const trimmedLine = line.trim();
+    
+    // Empty line - add spacing
+    if (!trimmedLine) {
+      y += 7;
+      continue;
+    }
+    
+    // Check if we need a new page
+    if (y > pageHeight - marginBottom) {
+      doc.addPage();
+      setPageBg();
+      doc.setFont('Helvetica', 'normal');
+      setTextColor();
+      y = marginTop;
+    }
+    
+    // Render line centered with proper wrapping
+    doc.text(trimmedLine, pageWidth / 2, y, { 
+      align: 'center',
+      maxWidth: contentWidth,
+      lineHeightFactor: 1.7
+    });
+    y += 8;
+  }
+
+  // Use slug as filename
+  doc.save(`${slug}.pdf`);
 }

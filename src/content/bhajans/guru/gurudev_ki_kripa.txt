@@ -1,12 +1,3 @@
----
-title: गुरुदेव की कृपा
-titleEn: Grace of Gurudev
-description: गुरु की कृपा और मार्गदर्शन
-descriptionEn: Grace and guidance of the Guru
-singer: मुनि श्री प्रमाणसागर
-tags: guru, kripa, guidance, devotion
----
-
 गुरुदेव की कृपा बरसे,
 मन का अंधकार सब हरसे।
 

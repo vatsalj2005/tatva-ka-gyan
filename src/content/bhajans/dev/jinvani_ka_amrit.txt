@@ -1,12 +1,3 @@
----
-title: जिनवाणी का अमृत
-titleEn: Nectar of Jinvani
-description: तीर्थंकर भगवान की वाणी का गुणगान
-descriptionEn: Praise of the words of Tirthankara Bhagwan
-singer: पं. प्रवीण जैन
-tags: jinvani, tirthankara, devotion, amrit
----
-
 जिनवाणी का अमृत पी लो,
 मन का मैल सदा को धो लो।
 

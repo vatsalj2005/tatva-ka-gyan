@@ -54,11 +54,8 @@ const SubdivisionPage = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-foreground group-hover:text-gold transition-colors truncate devanagari-safe">
-                      {language === 'hi' ? bhajan.title : bhajan.titleEn}
+                      {bhajan.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {language === 'hi' ? bhajan.description : bhajan.descriptionEn}
-                    </p>
                     {bhajan.singer && (
                       <p className="text-xs text-gold/70 mt-0.5">🎤 {bhajan.singer}</p>
                     )}
