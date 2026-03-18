@@ -1,4 +1,4 @@
-# तत्वो का अर्थ — Tatva Ka Gyan
+# तत्वो का अर्थ — Tatva Ka Arth
 
 A digital library for Jain scriptures, bhajans, poojas, and religious texts.
 
